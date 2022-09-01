@@ -1004,6 +1004,11 @@ impl<T: Data> WinHandler for DruidHandler<T> {
             .do_window_event(Event::KeyUp(event), self.window_id);
     }
 
+    fn clipboard_change(&mut self) {
+        self.app_state
+            .do_window_event(Event::ClipboardChange, self.window_id);
+    }
+
     fn wheel(&mut self, event: &MouseEvent) {
         self.app_state
             .do_window_event(Event::Wheel(event.clone().into()), self.window_id);

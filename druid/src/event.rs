@@ -191,6 +191,8 @@ pub enum Event {
     ///
     /// [`WidgetPod`]: struct.WidgetPod.html
     Internal(InternalEvent),
+    /// Clipboard change event.
+    ClipboardChange,
 }
 
 /// Internal events used by druid inside [`WidgetPod`].
@@ -431,6 +433,7 @@ impl Event {
             Event::WindowConnected
             | Event::WindowCloseRequested
             | Event::WindowDisconnected
+            | Event::ClipboardChange
             | Event::WindowSize(_)
             | Event::Timer(_)
             | Event::AnimFrame(_)

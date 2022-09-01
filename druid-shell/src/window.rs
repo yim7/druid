@@ -701,6 +701,9 @@ pub trait WinHandler {
 
     /// Get a reference to the handler state. Used mostly by idle handlers.
     fn as_any(&mut self) -> &mut dyn Any;
+
+    /// Called when the window listens WM_CLIPBOARDUPDATE and the content of the clipboard have changed
+    fn clipboard_change(&mut self) {}
 }
 
 impl From<backend::WindowHandle> for WindowHandle {

@@ -1255,6 +1255,11 @@ impl WndProc for MyWndProc {
                 });
                 Some(0)
             }
+            WM_CLIPBOARDUPDATE => {
+                debug!("clipboard change event");
+                self.with_wnd_state(|s| s.handler.clipboard_change());
+                Some(0)
+            }
             DS_RUN_IDLE => self
                 .with_wnd_state(|s| {
                     let queue = self.handle.borrow().take_idle_queue();
