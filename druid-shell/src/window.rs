@@ -186,6 +186,11 @@ impl WindowHandle {
         self.0.close()
     }
 
+    /// Hide the window
+    pub fn hide(&self) {
+        self.0.hide()
+    }
+
     /// Set whether the window should be resizable
     pub fn resizable(&self, resizable: bool) {
         self.0.resizable(resizable)
