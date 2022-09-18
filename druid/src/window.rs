@@ -29,6 +29,7 @@ use crate::contexts::ContextState;
 use crate::core::{CommandQueue, FocusChange, WidgetState};
 use crate::debug_state::DebugState;
 use crate::menu::{MenuItemId, MenuManager};
+use crate::shortcut::{ShortcutId, ShortcutManager};
 use crate::text::TextFieldRegistration;
 use crate::widget::LabelText;
 use crate::win_handler::RUN_COMMANDS_TOKEN;
@@ -53,6 +54,7 @@ pub struct Window<T> {
     size: Size,
     invalid: Region,
     pub(crate) menu: Option<MenuManager<T>>,
+    pub(crate) shortcuts: Option<ShortcutManager<T>>,
     pub(crate) context_menu: Option<(MenuManager<T>, Point)>,
     // This will be `Some` whenever the most recently displayed frame was an animation frame.
     pub(crate) last_anim: Option<Instant>,
@@ -83,6 +85,7 @@ impl<T> Window<T> {
             title: pending.title,
             transparent: pending.transparent,
             menu: pending.menu,
+            shortcuts: pending.shortcuts,
             context_menu: None,
             last_anim: None,
             last_mouse_pos: None,
@@ -127,6 +130,12 @@ impl<T: Data> Window<T> {
         }
         if let Some((menu, _)) = &mut self.context_menu {
             menu.event(queue, Some(self.id), cmd_id, data, env);
+        }
+    }
+
+    pub(crate) fn shortcut(&mut self, shortcut_id: ShortcutId, data: &mut T, env: &Env) {
+        if let Some(scm) = &mut self.shortcuts {
+            scm.event(shortcut_id, data, env);
         }
     }
 
@@ -701,6 +710,11 @@ impl<T: Data> Window<T> {
 }
 
 impl WindowId {
+    /// Custom window id
+    pub fn new(id: u64) -> Self {
+        Self(id)
+    }
+
     /// Allocate a new, unique window id.
     pub fn next() -> WindowId {
         static WINDOW_COUNTER: Counter = Counter::new();

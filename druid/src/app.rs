@@ -18,6 +18,7 @@ use crate::ext_event::{ExtEventHost, ExtEventSink};
 use crate::kurbo::{Point, Size};
 use crate::menu::MenuManager;
 use crate::shell::{Application, Error as PlatformError, WindowBuilder, WindowHandle, WindowLevel};
+use crate::shortcut::ShortcutManager;
 use crate::widget::LabelText;
 use crate::win_handler::{AppHandler, AppState};
 use crate::window::WindowId;
@@ -85,6 +86,7 @@ pub struct PendingWindow<T> {
     pub(crate) title: LabelText<T>,
     pub(crate) transparent: bool,
     pub(crate) menu: Option<MenuManager<T>>,
+    pub(crate) shortcuts: Option<ShortcutManager<T>>,
     pub(crate) size_policy: WindowSizePolicy, // This is copied over from the WindowConfig
                                               // when the native window is constructed.
 }
@@ -100,6 +102,7 @@ impl<T: Data> PendingWindow<T> {
             root: Box::new(root),
             title: LocalizedString::new("app-name").into(),
             menu: MenuManager::platform_default(),
+            shortcuts: None,
             transparent: false,
             size_policy: WindowSizePolicy::User,
         }
@@ -132,6 +135,11 @@ impl<T: Data> PendingWindow<T> {
         menu: impl FnMut(Option<WindowId>, &T, &Env) -> Menu<T> + 'static,
     ) -> Self {
         self.menu = Some(MenuManager::new(menu));
+        self
+    }
+
+    pub fn shortcut(mut self, shortcut: ShortcutManager<T>) -> Self {
+        self.shortcuts = Some(shortcut);
         self
     }
 }
@@ -486,6 +494,12 @@ impl<T: Data> WindowDesc<T> {
         menu: impl FnMut(Option<WindowId>, &T, &Env) -> Menu<T> + 'static,
     ) -> Self {
         self.pending = self.pending.menu(menu);
+        self
+    }
+
+    ///
+    pub fn shortcut(mut self, shortcut: ShortcutManager<T>) -> Self {
+        self.pending = self.pending.shortcut(shortcut);
         self
     }
 

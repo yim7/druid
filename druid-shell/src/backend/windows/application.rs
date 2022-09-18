@@ -32,7 +32,7 @@ use winapi::um::winnt::LOCALE_NAME_MAX_LENGTH;
 use winapi::um::winuser::{
     DispatchMessageW, GetAncestor, GetMessageW, LoadIconW, PeekMessageW, PostMessageW,
     PostQuitMessage, RegisterClassW, TranslateAcceleratorW, TranslateMessage, GA_ROOT,
-    IDI_APPLICATION, MSG, PM_NOREMOVE, WM_TIMER, WNDCLASSW,
+    IDI_APPLICATION, MSG, PM_NOREMOVE, WM_HOTKEY, WM_TIMER, WNDCLASSW,
 };
 
 use piet_common::D2DLoadedFonts;
@@ -119,7 +119,7 @@ impl Application {
         self.state.borrow_mut().windows.remove(&hwnd)
     }
 
-    pub fn run(self, _handler: Option<Box<dyn AppHandler>>) {
+    pub fn run(self, mut handler: Option<Box<dyn AppHandler>>) {
         unsafe {
             // Handle windows messages.
             //
@@ -149,7 +149,15 @@ impl Application {
                     }
                     break;
                 }
+
                 let mut msg: MSG = msg.assume_init();
+                if msg.message == WM_HOTKEY {
+                    println!("hotkey trigger!!!");
+                    if let Some(handler) = &mut handler {
+                        handler.shortcut(msg.wParam as u32);
+                    }
+                }
+
                 let accels = accels::find_accels(GetAncestor(msg.hwnd, GA_ROOT));
                 let translated = accels.map_or(false, |it| {
                     TranslateAcceleratorW(msg.hwnd, it.handle(), &mut msg) != 0

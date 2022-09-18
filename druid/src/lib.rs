@@ -175,6 +175,7 @@ mod localization;
 pub mod menu;
 mod mouse;
 pub mod scroll_component;
+pub mod shortcut;
 mod sub_window;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod tests;

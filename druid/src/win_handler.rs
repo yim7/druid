@@ -30,6 +30,7 @@ use crate::app_delegate::{AppDelegate, DelegateCtx};
 use crate::core::CommandQueue;
 use crate::ext_event::{ExtEventHost, ExtEventSink};
 use crate::menu::{ContextMenu, MenuItemId, MenuManager};
+use crate::shortcut::ShortcutId;
 use crate::window::{ImeUpdateFn, Window};
 use crate::{
     Command, Data, Env, Event, Handled, InternalEvent, KeyEvent, PlatformError, Selector, Target,
@@ -196,6 +197,18 @@ impl<T: Data> InnerAppState<T> {
                 .root_menu
                 .as_mut()
                 .map(|m| m.event(queue, None, cmd_id, data, env)),
+        };
+    }
+
+    fn handle_shortcut(&mut self, hotkey_id: ShortcutId, window_id: Option<WindowId>) {
+        let data = &mut self.data;
+        let env = &self.env;
+        match window_id {
+            Some(id) => self
+                .windows
+                .get_mut(id)
+                .map(|w| w.shortcut(hotkey_id, data, env)),
+            None => unimplemented!(),
         };
     }
 
@@ -578,7 +591,9 @@ impl<T: Data> AppState<T> {
     }
 
     fn window_got_focus(&mut self, window_id: WindowId) {
-        self.inner.borrow_mut().window_got_focus(window_id)
+        self.inner
+            .try_borrow_mut()
+            .map(|mut state| state.window_got_focus(window_id));
     }
 
     /// Send an event to the widget hierarchy.
@@ -657,6 +672,14 @@ impl<T: Data> AppState<T> {
         self.inner
             .borrow_mut()
             .handle_menu_cmd(MenuItemId::new(cmd_id), window_id);
+        self.process_commands();
+        self.inner.borrow_mut().do_update();
+    }
+
+    fn handle_shortcut(&mut self, hotkey_id: u32, window_id: Option<WindowId>) {
+        self.inner
+            .borrow_mut()
+            .handle_shortcut(ShortcutId::new(hotkey_id), window_id);
         self.process_commands();
         self.inner.borrow_mut().do_update();
     }
@@ -861,7 +884,7 @@ impl<T: Data> AppState<T> {
     fn hide_window(&mut self, id: WindowId) {
         self.inner.borrow_mut().hide_window(id);
     }
-    
+
     fn configure_window(&mut self, cmd: Command, id: WindowId) {
         if let Some(config) = cmd.get(sys_cmd::CONFIGURE_WINDOW) {
             self.inner.borrow_mut().configure_window(config, id);
@@ -929,6 +952,10 @@ impl<T: Data> AppState<T> {
             builder.set_menu(menu);
         }
 
+        if let Some(sc) = pending.shortcuts.as_ref() {
+            builder.set_shortcuts(sc.platform_shortcuts());
+        }
+
         let handler = DruidHandler::new_shared((*self).clone(), id);
         builder.set_handler(Box::new(handler));
 
@@ -940,6 +967,11 @@ impl<T: Data> AppState<T> {
 impl<T: Data> crate::shell::AppHandler for AppHandler<T> {
     fn command(&mut self, id: u32) {
         self.app_state.handle_system_cmd(id, None)
+    }
+
+    fn shortcut(&mut self, id: u32) {
+        // TODO 暂时写死 window id
+        self.app_state.handle_shortcut(id, Some(WindowId::new(1)))
     }
 }
 
@@ -971,6 +1003,10 @@ impl<T: Data> WinHandler for DruidHandler<T> {
 
     fn command(&mut self, id: u32) {
         self.app_state.handle_system_cmd(id, Some(self.window_id));
+    }
+
+    fn shortcut(&mut self, id: u32) {
+        self.app_state.handle_shortcut(id, Some(self.window_id));
     }
 
     fn save_as(&mut self, token: FileDialogToken, file_info: Option<FileInfo>) {

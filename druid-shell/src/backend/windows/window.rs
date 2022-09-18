@@ -64,6 +64,7 @@ use super::error::Error;
 use super::keyboard::{self, KeyboardState};
 use super::menu::Menu;
 use super::paint;
+use super::shortcut::Shortcuts;
 use super::timers::TimerSlots;
 use super::util::{self, as_result, FromWide, ToWide, OPTIONAL_FUNCTIONS};
 
@@ -91,6 +92,7 @@ pub(crate) struct WindowBuilder {
     handler: Option<Box<dyn WinHandler>>,
     title: String,
     menu: Option<Menu>,
+    shortcuts: Option<Shortcuts>,
     present_strategy: PresentStrategy,
     resizable: bool,
     show_titlebar: bool,
@@ -1290,6 +1292,7 @@ impl WindowBuilder {
             handler: None,
             title: String::new(),
             menu: None,
+            shortcuts: None,
             resizable: true,
             show_titlebar: true,
             transparent: false,
@@ -1342,6 +1345,10 @@ impl WindowBuilder {
 
     pub fn set_menu(&mut self, menu: Menu) {
         self.menu = Some(menu);
+    }
+
+    pub fn set_shortcuts(&mut self, shortcuts: Shortcuts) {
+        self.shortcuts = Some(shortcuts);
     }
 
     pub fn set_position(&mut self, position: Point) {
@@ -1509,6 +1516,10 @@ impl WindowBuilder {
             );
             if hwnd.is_null() {
                 return Err(Error::NullHwnd);
+            }
+
+            if let Some(shortcuts) = self.shortcuts {
+                shortcuts.initialize(hwnd);
             }
 
             if let Some(size_dp) = self.size {
@@ -1870,12 +1881,16 @@ impl WindowHandle {
 
     /// Hides the window.
     pub fn hide(&self) {
-        self.defer(DeferredOp::ShowWindow(false));
+        unsafe {
+            ShowWindow(self.get_hwnd().unwrap(), SW_HIDE);
+        }
     }
 
     /// Bring this window to the front of the window stack and give it focus.
     pub fn bring_to_front_and_focus(&self) {
-        self.defer(DeferredOp::ShowWindow(true));
+        unsafe {
+            ShowWindow(self.get_hwnd().unwrap(), SW_SHOW);
+        }
     }
 
     pub fn request_anim_frame(&self) {
@@ -1920,6 +1935,7 @@ impl WindowHandle {
     fn defer(&self, op: DeferredOp) {
         if let Some(w) = self.state.upgrade() {
             w.deferred_queue.borrow_mut().push(op);
+            println!("deferer queue length {}", w.deferred_queue.borrow().len());
         }
     }
 

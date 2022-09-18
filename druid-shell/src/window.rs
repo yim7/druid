@@ -17,6 +17,7 @@
 use std::any::Any;
 use std::time::Duration;
 
+use crate::Shortcuts;
 use crate::application::Application;
 use crate::backend::window as backend;
 use crate::common_util::Counter;
@@ -514,6 +515,11 @@ impl WindowBuilder {
         self.0.set_menu(menu.into_inner())
     }
 
+    /// Set the window's shortcut.
+    pub fn set_shortcuts(&mut self, shortcuts: Shortcuts) {
+        self.0.set_shortcuts(shortcuts.into_inner())
+    }
+
     /// Sets the initial state of the window.
     pub fn set_window_state(&mut self, state: WindowState) {
         self.0.set_window_state(state);
@@ -575,6 +581,10 @@ pub trait WinHandler {
     /// Called when a menu item is selected.
     #[allow(unused_variables)]
     fn command(&mut self, id: u32) {}
+
+    /// Called when a shortcut pressed.
+    #[allow(unused_variables)]
+    fn shortcut(&mut self, id: u32) {}
 
     /// Called when a "Save As" dialog is closed.
     ///

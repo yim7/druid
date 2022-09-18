@@ -24,6 +24,7 @@ mod keyboard;
 pub mod menu;
 pub mod paint;
 pub mod screen;
+pub mod shortcut;
 mod timers;
 pub mod util;
 pub mod window;

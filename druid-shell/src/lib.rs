@@ -68,6 +68,7 @@ mod mouse;
 mod region;
 mod scale;
 mod screen;
+mod shortcut;
 mod window;
 
 pub mod platform;
@@ -85,6 +86,7 @@ pub use mouse::{Cursor, CursorDesc, MouseButton, MouseButtons, MouseEvent};
 pub use region::Region;
 pub use scale::{Scalable, Scale, ScaledArea};
 pub use screen::{Monitor, Screen};
+pub use shortcut::Shortcuts;
 pub use window::{
     FileDialogToken, IdleHandle, IdleToken, TextFieldToken, TimerToken, WinHandler, WindowBuilder,
     WindowHandle, WindowLevel, WindowState,

@@ -1,7 +1,5 @@
 #![windows_subsystem = "windows"]
 
-use std::sync::Arc;
-
 use druid::{
     widget::TextBox, AppLauncher, Data, Lens, Point, Size, Widget, WidgetExt, WindowDesc,
     WindowHandle, WindowLevel,
